@@ -106,18 +106,42 @@
     'perspective'
   ];
 
-  $.cssHooks.rotate = {
-    get: function(elem, computed) {
-      var matrix = _processMatrix($(elem));
-      return '(' + matrix.angle + 'deg)';
-    }
-  };
+  /**
+   * @description fallback support for IE9
+   */
 
-  $.cssHooks.scale = {
-    get: function(elem, computed) {
-      return _processMatrix($(elem)).scale;
-    }
-  };
+  if (_isTransition()) {
+
+    /**
+     * @extend jQuery CSS3 hooks for "rotate", "rotateY" and "rotateX"
+     */
+
+    _.map(['rotate','rotateY','rotateX'], function(val, key) {
+      $.cssHooks.rotate = {
+        get: function(elem, computed, extra) {
+          var matrix = _processMatrix($(elem));
+          return '(' + matrix.angle + 'deg)';
+        },
+        set: function(elem, value) {
+          $(elem).css(_getPropertyName('Transform').css, value);
+        }
+      };
+    });
+
+    /**
+     * @extend jQuery CSS3 hook for "scale"
+     */
+
+    $.cssHooks.scale = {
+      get: function(elem, computed) {
+        return _processMatrix($(elem)).scale;
+      },
+      set: function(elem, value) {
+        $(elem).css(_getPropertyName('Transform').css, value);
+      }
+    };
+
+  }
 
   /**
    * @private _processMatrix
@@ -383,11 +407,10 @@
     getCurrentParams: function() {
       var params = {};
       _.forEach(this.params, function(val, key) {
-        if (_.contains(_transformTypes, key)) {
-          params[key] = this.$elem.css(key);
-        } else {
-          params[key] = this.$elem.css(key);
+        if (_isTransform(key)) {
+          params.transform = this.$elem.css(key);
         }
+        params[key] = this.$elem.css(key);
       }, this);
       return params;
     },
@@ -421,39 +444,33 @@
     },
 
     /**
+     * @method pause
+     * @description stops/pauses a transition
+     */
+
+    pause: function() {
+      this.pausedStyle = this.$elem.attr('style');
+      _.forEach(this.getCurrentParams(), function(val, key) {
+        this.$elem.css(key, this.$elem.css(key));
+      }, this);
+      this.$elem.removeClass(this.id);
+      this.state = 'PAUSED';
+    },
+
+    /**
      * @method resume
      * @description resumes a transition from last play state
      */
 
     resume: function() {
-      _.forEach(this.params, function(val, key) {
+      _.forEach(this.getCurrentParams(), function(val, key) {
         this.$elem.css(key, '');
       }, this);
-      this.$elem.attr('style', this.pausedTransition.style);
+      this.$elem.addClass(this.id);
       this.completeTimeout = setTimeout(_.bind(function() {
         this.complete();
       }, this), this.options.duration);
       this.state = 'PLAYING';
-    },
-
-    /**
-     * @method stop
-     * @description stops/pauses a transition
-     */
-
-    pause: function() {
-      var transitionName, transitionValue;
-      transitionName = _getPropertyName('Transform').css;
-      transitionValue = this.$elem.css(transitionName);
-      this.pausedTransition = {
-        key   : transitionName,
-        val   : transitionValue,
-        style : this.$elem.attr('style')
-      };
-      _.forEach(this.params, function(val, key) {
-        this.$elem.css(key, this.$elem.css(key));
-      }, this);
-      this.state = 'PAUSED';
     },
 
     /**
@@ -477,7 +494,11 @@
       var $elem = this.$elem;
       delete this.options.when;
       this.options.queue = false;
-      this.options.complete = this.complete;
+      this.options.complete = _.bind(function() {
+        this.sequence.trigger('animation:completed', this);
+        this.state = 'COMPLETED';
+        this.active = false;
+      }, this);
       return this.$elem.animate(this.params, this.options);
     },
 
@@ -525,9 +546,11 @@
       if (!this.console || !this.DEBUG) {
         return;
       }
-      var args = Array.prototype.slice.call(arguments);
+      var log, args;
+      args = Array.prototype.slice.call(arguments);
       args[0] = ('DEBUG [' + _padMilliseconds(this.elapsed()) + '] > ') + message;
-      console.log.apply(console, args);
+      log = Function.prototype.bind.call(console.log, console);
+      log.apply(console, args);
     },
 
     /**
@@ -730,6 +753,9 @@
      */
     
     pause: function() {
+      if (!this.transition) {
+        return this;
+      }
       this.pausedAt = this.elapsed();
       this.log('pausing');
       _.forEach(this.get('animations'), function(val, index) {
@@ -755,6 +781,9 @@
      */
     
     resume: function() {
+      if (!this.transition) {
+        return this;
+      }
       var PAUSE_OFFSET = this.pausedAt;
       this.log('resuming');
       _.forEach(this.get('animations'), function(val, index) {
@@ -780,6 +809,9 @@
      */
 
     rewind: function() {
+      if (!this.transition) {
+        return this;
+      }
       var runTime, reversedAnimations, PAUSE_OFFSET;
       PAUSE_OFFSET = this.pausedAt;
       runTime = this.getRunTime();
