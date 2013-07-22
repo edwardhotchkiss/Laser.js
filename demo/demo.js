@@ -24,6 +24,7 @@ $(function() {
   .add('.box', { opacity : 0 }, { duration : 750, easing : 'easeOutExpo', when : 2250 })
   .add('.box', { opacity : 1 }, { duration : 750, easing : 'easeOutExpo', when : 3000 })
   .add('.box', { scale : 2 }, { duration : 750, easing : 'easeOutExpo', when : 3750 })
+  .add('.box', { rotateY : 180 }, { duration : 750, easing : 'easeOutExpo', when : 4500 })
   
   // start play back
   .start();
@@ -34,6 +35,6 @@ $(function() {
     setTimeout(function() {
       seq.resume();
     }, 2000);
-  }, 850);
+  }, 4700);
 
 });
