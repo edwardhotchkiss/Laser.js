@@ -182,7 +182,7 @@
    */
 
   function _setCachedElement(selector) {
-    _cachedElements[selector] = _getCachedElement(selector) || $(_getCSSPath(selector));
+    _cachedElements[selector] = _getCachedElement(selector) || $(selector);
     return _cachedElements[selector];
   }
 
@@ -253,16 +253,33 @@
   }
 
   /**
-   * @private _createCSSClass
+   * @private _insertCSSClass
    * @description creates a css .class with a unique id to 
    * add/remove css transitions
    * @return {String} name inserted css class name
    */
 
   function _insertCSSClass(name, content) {
-    var style = '<style> .'+ name + ' { ' + content + '} </style>';
+    var style = '<style id="' + name + '"> .'+ name + ' { ' + content + '} </style>';
     $('html > head').append(style);
     return name;
+  }
+
+  /**
+   * @private _removeCSSClass
+   * @description removes a .css class by id
+   * @param {String} classId class identifier
+   */
+
+  function _removeCSSClass(classId) {
+    var stylesheets, deleteRule;
+    stylesheets = document.styleSheets;
+    deleteRule = 'deleteRule' in stylesheets[0] ? 'deleteRule' : 'removeRule';
+    _.forEach(stylesheets, function(stylesheet, index) {
+      if (stylesheet.ownerNode.id === classId) {
+        stylesheets[index][deleteRule]();
+      }
+    });
   }
 
   /**
@@ -345,13 +362,13 @@
         }
       } else {
         unit = (key === 'opacity') ? '' : 'px';
-        blandTransition += _getPropertyName(key).css + ' : ' + _formatUnit(val, unit) + ';';
+        blandTransition += _getPropertyName(key).css + ' : ' + _formatUnit(val, unit) + ' !important;';
       }
     });
-    finalTransition += (_getPropertyName('transition-duration').css + ': ' + duration + ';');
-    finalTransition += (_getPropertyName('transition-timing-function').css + ':' + _getEasingBezier(easing) + ';');
+    finalTransition += (_getPropertyName('transition-duration').css + ': ' + duration + ' !important;');
+    finalTransition += (_getPropertyName('transition-timing-function').css + ':' + _getEasingBezier(easing) + '!important;');
     if (transformString !== undefined ) {
-      finalTransition += _getPropertyName('Transform').css + ':' + transformString + ';';
+      finalTransition += _getPropertyName('Transform').css + ':' + transformString + ' !important;';
     }
     finalTransition += blandTransition; 
     return finalTransition; 
@@ -530,7 +547,8 @@
      */
 
     transition: function() {
-      var transitionString = _createTransitionString(
+      var transitionString;
+      transitionString = _createTransitionString(
         this.params,          
         this.options.duration,  
         this.options.easing          
@@ -683,6 +701,7 @@
           params   : params,
           options  : options,
           sequence : sequence,
+          selector : selector,
           $elem    : $elem
         })
       );
@@ -794,6 +813,7 @@
             break;
         }
       }, this);
+      this.trigger('sequence:paused');
       return this;
     },
 
@@ -821,6 +841,7 @@
             break;
         }
       }, this);
+      this.trigger('sequence:resuming');
       return this;
     },
 
@@ -850,6 +871,7 @@
       }, this);
       this.direction = 'rewind';
       this.remaining = reversedAnimations.length;
+      this.trigger('sequence:rewinding');
       return this;
     },
 
