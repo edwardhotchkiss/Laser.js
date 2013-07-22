@@ -1,4 +1,14 @@
 
+.container {
+	position: relative;
+	margin: 0 auto 0 auto;
+	width: 600px;
+	height: 350px;
+	border: 1px solid #eee;
+	border-radius: 8px;
+	margin-top: 30px;
+}
+
 .box {
   top: 50px;
   left: 50px;
@@ -6,4 +16,5 @@
   height: 50px;
   position: absolute;
   background-color: #ff0099;
+  border-radius: 5px;
 }

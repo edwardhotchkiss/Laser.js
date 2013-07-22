@@ -182,7 +182,7 @@
    */
 
   function _setCachedElement(selector) {
-    _cachedElements[selector] = _getCachedElement(selector) || $(selector);
+    _cachedElements[selector] = _getCachedElement(selector) || $(_getCSSPath(selector));
     return _cachedElements[selector];
   }
 
@@ -377,6 +377,28 @@
 
   function _isTransform(val) {
     return (/(rotate|scale)/).test(val);
+  }
+
+  /**
+   * @private _getCSSPath
+   * @description gets full css path of a jQuery object
+   * @param {String} selector
+   * @return {String} full path with selector
+   */
+
+  function _getCSSPath(selector) {
+    var path, elem = $(selector)[0];
+    if (elem.id) {
+      return "#" + elem.id;
+    }
+    if (elem.tagName == 'BODY') {
+      return '';
+    }
+    path = _getCSSPath(elem.parentNode);
+    if (elem.className) {
+      return path + " " + elem.tagName + "." + elem.className;
+    }
+    return path + " " + elem.tagName;
   }
 
   /**
