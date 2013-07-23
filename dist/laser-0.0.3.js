@@ -106,18 +106,42 @@
     'perspective'
   ];
 
-  $.cssHooks.rotate = {
-    get: function(elem, computed) {
-      var matrix = _processMatrix($(elem));
-      return '(' + matrix.angle + 'deg)';
-    }
-  };
+  /**
+   * @description fallback support for IE9
+   */
 
-  $.cssHooks.scale = {
-    get: function(elem, computed) {
-      return _processMatrix($(elem)).scale;
-    }
-  };
+  if (_isTransition()) {
+
+    /**
+     * @extend jQuery CSS3 hooks for "rotate", "rotateY" and "rotateX"
+     */
+
+    _.map(['rotate','rotateY','rotateX'], function(key, index) {
+      $.cssHooks[key] = {
+        get: function(elem, computed, extra) {
+            var matrix = _processMatrix($(elem));
+            return '(' + matrix.angle + 'deg)';
+        },
+        set: function(elem, value) {
+          $(elem).css(_getPropertyName('Transform').css, value);
+        }
+      };
+    });
+
+    /**
+     * @extend jQuery CSS3 hook for "scale"
+     */
+
+    $.cssHooks.scale = {
+      get: function(elem, computed) {
+        return _processMatrix($(elem)).scale;
+      },
+      set: function(elem, value) {
+        $(elem).css(_getPropertyName('Transform').css, value);
+      }
+    };
+
+  }
 
   /**
    * @private _processMatrix
@@ -127,6 +151,9 @@
   function _processMatrix($elem) {
     var a, b, c, d, angle, scale, values, matrix;
     matrix = $elem.css(_getPropertyName('Transform').css);
+    if (matrix === 'none') {
+        return 0;
+    }
     values = matrix.split('(')[1].split(')')[0].split(',');
     a = values[0];
     b = values[1];
@@ -218,27 +245,56 @@
    * @param {String} unit example, 'px'/'%'
    */
 
-  function _formatUnit(val, unit) {
-    if (unit === '') {
-      return val;
+  function _formatUnit(val, currentVal, unit) {
+    var result, relativeUnit;
+    if (typeof(val) === 'string') {
+        relativeUnit = val.match(/^(-|\+)|(=)|([0-9]+$)/g);
+        if (unit === '') {
+            result = val;
+        } else if (relativeUnit && relativeUnit.length === 3) {
+            currentVal = currentVal.replace(/deg|px/, '');
+            if (relativeUnit[0] === '-') {
+                result = (currentVal - relativeUnit[2]) + unit;
+            } else if (relativeUnit[0] === '+') {
+                result = (currentVal + relativeUnit[2]) + unit;
+            }
+        } else if (!/^[0-9]+$/.test(val)) {
+            result = val;
+        }
+    } else {
+        result = (val.toString() + unit);
     }
-    if (typeof(val) === 'string' && !/^[0-9]+$/.test(val)) {
-      return val;
-    }
-    return (val.toString() + unit);
+    return result;
   }
 
   /**
-   * @private _createCSSClass
+   * @private _insertCSSClass
    * @description creates a css .class with a unique id to 
    * add/remove css transitions
    * @return {String} name inserted css class name
    */
 
   function _insertCSSClass(name, content) {
-    var style = '<style> .'+ name + ' { ' + content + '} </style>';
+    var style = '<style id="' + name + '"> .'+ name + ' { ' + content + '} </style>';
     $('html > head').append(style);
     return name;
+  }
+
+  /**
+   * @private _removeCSSClass
+   * @description removes a .css class by id
+   * @param {String} classId class identifier
+   */
+
+  function _removeCSSClass(classId) {
+    var stylesheets, deleteRule;
+    stylesheets = document.styleSheets;
+    deleteRule = 'deleteRule' in stylesheets[0] ? 'deleteRule' : 'removeRule';
+    _.forEach(stylesheets, function(stylesheet, index) {
+      if (stylesheet.ownerNode.id === classId) {
+        stylesheets[index][deleteRule]();
+      }
+    });
   }
 
   /**
@@ -307,27 +363,28 @@
    * @returns {String} Returns string of transition
    */
 
-  function _createTransitionString(params, _duration, easing) {
-    var unit, duration, transformString, blandTransition = '', finalTransition = '';
+  function _createTransitionString(params, startParams, _duration, easing) {
+    var cur, unit, duration, transformString, blandTransition = '', finalTransition = '';
     duration = _formatDuration(_duration); 
     _.each(params, function(val, key) {
+        cur = startParams[key];
       if (_.contains(_transformTypes, key)) {
         unit = (key === 'perspective') ? 'px' : 'deg';
         unit = (key === 'scale') ? '' : unit;
         if (transformString === '') {
-          transformString += ' ' + key + '(' + _formatUnit(val, unit) + ') ';
+          transformString += ' ' + key + '(' + _formatUnit(val, cur, unit) + ') ';
         } else {
-          transformString = key + '(' + _formatUnit(val, unit) + ') ';
+          transformString = key + '(' + _formatUnit(val, cur, unit) + ') ';
         }
       } else {
         unit = (key === 'opacity') ? '' : 'px';
-        blandTransition += _getPropertyName(key).css + ' : ' + _formatUnit(val, unit) + ';';
+        blandTransition += _getPropertyName(key).css + ' : ' + _formatUnit(val, cur, unit) + ' !important;';
       }
     });
-    finalTransition += (_getPropertyName('transition-duration').css + ': ' + duration + ';');
-    finalTransition += (_getPropertyName('transition-timing-function').css + ':' + _getEasingBezier(easing) + ';');
+    finalTransition += (_getPropertyName('transition-duration').css + ': ' + duration + ' !important;');
+    finalTransition += (_getPropertyName('transition-timing-function').css + ':' + _getEasingBezier(easing) + '!important;');
     if (transformString !== undefined ) {
-      finalTransition += _getPropertyName('Transform').css + ':' + transformString + ';';
+      finalTransition += _getPropertyName('Transform').css + ':' + transformString + ' !important;';
     }
     finalTransition += blandTransition; 
     return finalTransition; 
@@ -353,6 +410,28 @@
 
   function _isTransform(val) {
     return (/(rotate|scale)/).test(val);
+  }
+
+  /**
+   * @private _getCSSPath
+   * @description gets full css path of a jQuery object
+   * @param {String} selector
+   * @return {String} full path with selector
+   */
+
+  function _getCSSPath(selector) {
+    var path, elem = $(selector)[0];
+    if (elem.id) {
+      return "#" + elem.id;
+    }
+    if (elem.tagName == 'BODY') {
+      return '';
+    }
+    path = _getCSSPath(elem.parentNode);
+    if (elem.className) {
+      return path + " " + elem.tagName + "." + elem.className;
+    }
+    return path + " " + elem.tagName;
   }
 
   /**
@@ -383,11 +462,10 @@
     getCurrentParams: function() {
       var params = {};
       _.forEach(this.params, function(val, key) {
-        if (_.contains(_transformTypes, key)) {
-          params[key] = this.$elem.css(key);
-        } else {
-          params[key] = this.$elem.css(key);
+        if (_isTransform(key)) {
+          params.transform = this.$elem.css(key);
         }
+        params[key] = this.$elem.css(key);
       }, this);
       return params;
     },
@@ -399,14 +477,14 @@
      */
 
     play: function() {
+        this.startParams = this.getCurrentParams();
+        this.state = 'PLAYING';
+      this.active = true;
       if (this.sequence.transition) {
         this.transition();
       } else {
         this.animate();
       }
-      this.startParams = this.getCurrentParams();
-      this.state = 'PLAYING';
-      this.active = true;
     },
 
     /**
@@ -421,39 +499,33 @@
     },
 
     /**
+     * @method pause
+     * @description stops/pauses a transition
+     */
+
+    pause: function() {
+      this.pausedStyle = this.$elem.attr('style');
+      _.forEach(this.getCurrentParams(), function(val, key) {
+        this.$elem.css(key, this.$elem.css(key));
+      }, this);
+      this.$elem.removeClass(this.id);
+      this.state = 'PAUSED';
+    },
+
+    /**
      * @method resume
      * @description resumes a transition from last play state
      */
 
     resume: function() {
-      _.forEach(this.params, function(val, key) {
+      _.forEach(this.getCurrentParams(), function(val, key) {
         this.$elem.css(key, '');
       }, this);
-      this.$elem.attr('style', this.pausedTransition.style);
+      this.$elem.addClass(this.id);
       this.completeTimeout = setTimeout(_.bind(function() {
         this.complete();
       }, this), this.options.duration);
       this.state = 'PLAYING';
-    },
-
-    /**
-     * @method stop
-     * @description stops/pauses a transition
-     */
-
-    pause: function() {
-      var transitionName, transitionValue;
-      transitionName = _getPropertyName('Transform').css;
-      transitionValue = this.$elem.css(transitionName);
-      this.pausedTransition = {
-        key   : transitionName,
-        val   : transitionValue,
-        style : this.$elem.attr('style')
-      };
-      _.forEach(this.params, function(val, key) {
-        this.$elem.css(key, this.$elem.css(key));
-      }, this);
-      this.state = 'PAUSED';
     },
 
     /**
@@ -477,7 +549,11 @@
       var $elem = this.$elem;
       delete this.options.when;
       this.options.queue = false;
-      this.options.complete = this.complete;
+      this.options.complete = _.bind(function() {
+        this.sequence.trigger('animation:completed', this);
+        this.state = 'COMPLETED';
+        this.active = false;
+      }, this);
       return this.$elem.animate(this.params, this.options);
     },
 
@@ -487,8 +563,10 @@
      */
 
     transition: function() {
-      var transitionString = _createTransitionString(
-        this.params,          
+      var transitionString;
+      transitionString = _createTransitionString(
+        this.params,  
+        this.startParams,        
         this.options.duration,  
         this.options.easing          
       );
@@ -525,9 +603,11 @@
       if (!this.console || !this.DEBUG) {
         return;
       }
-      var args = Array.prototype.slice.call(arguments);
+      var log, args;
+      args = Array.prototype.slice.call(arguments);
       args[0] = ('DEBUG [' + _padMilliseconds(this.elapsed()) + '] > ') + message;
-      console.log.apply(console, args);
+      log = Function.prototype.bind.call(console.log, console);
+      log.apply(console, args);
     },
 
     /**
@@ -638,6 +718,7 @@
           params   : params,
           options  : options,
           sequence : sequence,
+          selector : selector,
           $elem    : $elem
         })
       );
@@ -730,6 +811,9 @@
      */
     
     pause: function() {
+      if (!this.transition) {
+        return this;
+      }
       this.pausedAt = this.elapsed();
       this.log('pausing');
       _.forEach(this.get('animations'), function(val, index) {
@@ -746,6 +830,7 @@
             break;
         }
       }, this);
+      this.trigger('sequence:paused');
       return this;
     },
 
@@ -755,6 +840,9 @@
      */
     
     resume: function() {
+      if (!this.transition) {
+        return this;
+      }
       var PAUSE_OFFSET = this.pausedAt;
       this.log('resuming');
       _.forEach(this.get('animations'), function(val, index) {
@@ -770,6 +858,7 @@
             break;
         }
       }, this);
+      this.trigger('sequence:resuming');
       return this;
     },
 
@@ -780,6 +869,9 @@
      */
 
     rewind: function() {
+      if (!this.transition) {
+        return this;
+      }
       var runTime, reversedAnimations, PAUSE_OFFSET;
       PAUSE_OFFSET = this.pausedAt;
       runTime = this.getRunTime();
@@ -796,6 +888,7 @@
       }, this);
       this.direction = 'rewind';
       this.remaining = reversedAnimations.length;
+      this.trigger('sequence:rewinding');
       return this;
     },
 

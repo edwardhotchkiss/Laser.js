@@ -1,6 +1,6 @@
 {
   "name": "laser.js",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Laser-precision animation sequencing & timing",
   "author": "Edward Hotchkiss <edward@candidblend.la>",
   "contributors":[

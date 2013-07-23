@@ -12,8 +12,8 @@ module.exports = function(grunt) {
         banner: '/*! laser.js v<%= pkg.version %>, <%= grunt.template.today("yyyy-mm-dd") %> */\n'
       },
       build: {
-        src: 'dist/laser.js',
-        dest: 'dist/laser.min.js'
+        src: 'dist/laser-<%= pkg.version %>.js',
+        dest: 'dist/laser-<%= pkg.version %>.min.js'
       }
     },
     jshint: {
@@ -37,7 +37,7 @@ module.exports = function(grunt) {
         src: [
           'src/laser.js'
         ],
-        dest: 'dist/laser.js'
+        dest: 'dist/laser-<%= pkg.version %>.js'
       }
     },
     watch: {
