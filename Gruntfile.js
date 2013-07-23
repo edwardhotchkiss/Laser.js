@@ -26,8 +26,7 @@ module.exports = function(grunt) {
       files: {
         src: [
           'Gruntfile.js',
-          'src/laser.js',
-          'demo/demo.js'
+          'src/laser.js'
         ]
       }
     },
@@ -45,8 +44,7 @@ module.exports = function(grunt) {
       scripts: {
         files: [
           'Gruntfile.js',
-          'src/laser.js',
-          'demo/demo.js'
+          'src/laser.js'
         ],
         tasks: ['jshint']
       }
