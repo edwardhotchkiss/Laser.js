@@ -116,11 +116,11 @@
      * @extend jQuery CSS3 hooks for "rotate", "rotateY" and "rotateX"
      */
 
-    _.map(['rotate','rotateY','rotateX'], function(val, key) {
-      $.cssHooks.rotate = {
+    _.map(['rotate','rotateY','rotateX'], function(key, index) {
+      $.cssHooks[key] = {
         get: function(elem, computed, extra) {
-          var matrix = _processMatrix($(elem));
-          return '(' + matrix.angle + 'deg)';
+            var matrix = _processMatrix($(elem));
+            return '(' + matrix.angle + 'deg)';
         },
         set: function(elem, value) {
           $(elem).css(_getPropertyName('Transform').css, value);
@@ -151,6 +151,9 @@
   function _processMatrix($elem) {
     var a, b, c, d, angle, scale, values, matrix;
     matrix = $elem.css(_getPropertyName('Transform').css);
+    if (matrix === 'none') {
+        return 0;
+    }
     values = matrix.split('(')[1].split(')')[0].split(',');
     a = values[0];
     b = values[1];
@@ -242,14 +245,26 @@
    * @param {String} unit example, 'px'/'%'
    */
 
-  function _formatUnit(val, unit) {
-    if (unit === '') {
-      return val;
+  function _formatUnit(val, currentVal, unit) {
+    var result, relativeUnit;
+    if (typeof(val) === 'string') {
+        relativeUnit = val.match(/^(-|\+)|(=)|([0-9]+$)/g);
+        if (unit === '') {
+            result = val;
+        } else if (relativeUnit && relativeUnit.length === 3) {
+            currentVal = currentVal.replace(/deg|px/, '');
+            if (relativeUnit[0] === '-') {
+                result = (currentVal - relativeUnit[2]) + unit;
+            } else if (relativeUnit[0] === '+') {
+                result = (currentVal + relativeUnit[2]) + unit;
+            }
+        } else if (!/^[0-9]+$/.test(val)) {
+            result = val;
+        }
+    } else {
+        result = (val.toString() + unit);
     }
-    if (typeof(val) === 'string' && !/^[0-9]+$/.test(val)) {
-      return val;
-    }
-    return (val.toString() + unit);
+    return result;
   }
 
   /**
@@ -348,21 +363,22 @@
    * @returns {String} Returns string of transition
    */
 
-  function _createTransitionString(params, _duration, easing) {
-    var unit, duration, transformString, blandTransition = '', finalTransition = '';
+  function _createTransitionString(params, startParams, _duration, easing) {
+    var cur, unit, duration, transformString, blandTransition = '', finalTransition = '';
     duration = _formatDuration(_duration); 
     _.each(params, function(val, key) {
+        cur = startParams[key];
       if (_.contains(_transformTypes, key)) {
         unit = (key === 'perspective') ? 'px' : 'deg';
         unit = (key === 'scale') ? '' : unit;
         if (transformString === '') {
-          transformString += ' ' + key + '(' + _formatUnit(val, unit) + ') ';
+          transformString += ' ' + key + '(' + _formatUnit(val, cur, unit) + ') ';
         } else {
-          transformString = key + '(' + _formatUnit(val, unit) + ') ';
+          transformString = key + '(' + _formatUnit(val, cur, unit) + ') ';
         }
       } else {
         unit = (key === 'opacity') ? '' : 'px';
-        blandTransition += _getPropertyName(key).css + ' : ' + _formatUnit(val, unit) + ' !important;';
+        blandTransition += _getPropertyName(key).css + ' : ' + _formatUnit(val, cur, unit) + ' !important;';
       }
     });
     finalTransition += (_getPropertyName('transition-duration').css + ': ' + duration + ' !important;');
@@ -461,14 +477,14 @@
      */
 
     play: function() {
+        this.startParams = this.getCurrentParams();
+        this.state = 'PLAYING';
+      this.active = true;
       if (this.sequence.transition) {
         this.transition();
       } else {
         this.animate();
       }
-      this.startParams = this.getCurrentParams();
-      this.state = 'PLAYING';
-      this.active = true;
     },
 
     /**
@@ -549,7 +565,8 @@
     transition: function() {
       var transitionString;
       transitionString = _createTransitionString(
-        this.params,          
+        this.params,  
+        this.startParams,        
         this.options.duration,  
         this.options.easing          
       );
