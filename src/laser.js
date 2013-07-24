@@ -19,6 +19,7 @@
   var Laser = window.Laser = function Laser(params) {
     _.extend(this, params);
     this.listeners = {};
+    this.state = 'blank';
     this.animations = [];
     this.direction = 'forward';
     this.transition = _isTransition();
@@ -534,9 +535,11 @@
      */
 
     rewind: function() {
+      this.$elem.addClass('rewind-shim');
       this.$elem.removeClass(this.id);
       this.completeTimeout = setTimeout(_.bind(function() {
         this.complete();
+        this.$elem.removeClass('rewind-shim');
       }, this), this.options.duration);
     },
 
@@ -792,6 +795,7 @@
       this.on('animation:completed', function(animation) {
         this.onAnimationComplete(animation);
       });
+      this.state = 'playing';
       return this;
     },
 
@@ -831,6 +835,7 @@
         }
       }, this);
       this.trigger('sequence:paused');
+      this.state = 'paused';
       return this;
     },
 
@@ -859,6 +864,7 @@
         }
       }, this);
       this.trigger('sequence:resuming');
+      this.state = 'resumed';
       return this;
     },
 
@@ -875,7 +881,7 @@
       var runTime, reversedAnimations, PAUSE_OFFSET;
       PAUSE_OFFSET = this.pausedAt;
       runTime = this.getRunTime();
-      this.log('reverse');
+      this.log('rewinding');
       reversedAnimations = _.map(this.get('animations'), function(val, index) {
         val.when = (runTime - val.when - val.options.duration);
         return val;
@@ -889,6 +895,7 @@
       this.direction = 'rewind';
       this.remaining = reversedAnimations.length;
       this.trigger('sequence:rewinding');
+      this.state = 'rewinding';
       return this;
     },
 
@@ -902,6 +909,16 @@
       var last, animations = this.get('animations');
       last = animations[animations.length - 1];
       return last.when + last.options.duration;
+    },
+
+    /**
+     * @method getState
+     * @description simple getter for sequence's (not animation) state
+     * @return {String} state current sequence state
+     */
+
+    getState: function() {
+      return this.state;
     }
 
   };
