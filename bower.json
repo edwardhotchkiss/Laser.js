@@ -1,18 +1,15 @@
 {
-  "name": "laser.js",
-  "version": "0.0.3",
-  "description": "Laser-precision animation sequencing & timing",
+  "name": "Laser.js",
+  "version": "1.0.0",
+  "description": "Laser-precision CSS3 animation sequencing & timing",
   "author": "Edward Hotchkiss <edward@candidblend.la>",
   "contributors":[
     { "name": "Edward Hotchkiss","email": "edward@candidblend.la" },
     { "name": "Lindsey Mysse","email": "lindsey.mysse@gmail.com" }
   ],
-  "main": "dist/laser.js",
+  "main": "dist/laser-1.0.0.js",
   "dependencies": {
-    "jquery": "1.10.2",
-    "underscore": ">=1.4.4",
-    "jquery-easing": "1.3.0",
-    "jquery-css3-ease": "1.0.0"
+    "jquery": ">=2.0.3"
   },
   "ignore": [
     "node_modules",
@@ -23,14 +20,14 @@
     "transition",
     "sequence"
   ],
-  "homepage": "https://github.com/CandidBlend/laser.js",
-  "bugs": "https://github.com/CandidBlend/laser.js/issues",
+  "homepage": "http://laserjs.org/",
+  "bugs": "https://github.com/CandidBlend/Laser.js/issues",
   "repository": {
     "type": "git",
-    "url": "git@github.com:CandidBlend/laser.js.git"
+    "url": "git@github.com:CandidBlend/Laser.js.git"
   },
   "licenses":[{
     "type":"MIT",
-    "url":"http://github.com/CandidBlend/laser.js/LICENSE"
+    "url":"http://github.com/CandidBlend/Laser.js/LICENSE"
   }]
 }
