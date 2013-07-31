@@ -1,5 +1,5 @@
 {
-  "name": "Laser",
+  "name": "laser",
   "version": "1.0.0",
   "title": "Laser.js",
   "description": "Laser-precision animation sequencing & timing",
@@ -13,14 +13,9 @@
     "email": "edward@candidblend.la"
   },
   "maintainers":[
-    { 
-      "name": "Edward Hotchkiss",
-      "email": "edward@candidblend.la"
-    },
-    {
-      "name": "Lindsey Mysse",
-      "email": "lindsey.mysse@gmail.com"
-    }
+    { "name": "Edward Hotchkiss","github": "http://github.com/edwardhotchkiss/" },
+    { "name": "Lindsey Mysse","github": "https://github.com/lindseymysse/" },
+    { "name": "Avi Deitcher", "github": "https://github.com/deitch/" }
   ],
   "homepage": "http://laserjs.org/",
   "dependencies": {

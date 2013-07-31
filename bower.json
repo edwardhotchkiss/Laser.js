@@ -4,8 +4,9 @@
   "description": "Laser-precision CSS3 animation sequencing & timing",
   "author": "Edward Hotchkiss <edward@candidblend.la>",
   "contributors":[
-    { "name": "Edward Hotchkiss","email": "edward@candidblend.la" },
-    { "name": "Lindsey Mysse","email": "lindsey.mysse@gmail.com" }
+    { "name": "Edward Hotchkiss","github": "http://github.com/edwardhotchkiss/" },
+    { "name": "Lindsey Mysse","github": "https://github.com/lindseymysse/" },
+    { "name": "Avi Deitcher", "github": "https://github.com/deitch/" }
   ],
   "main": "dist/laser-1.0.0.js",
   "dependencies": {
