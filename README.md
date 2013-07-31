@@ -9,12 +9,12 @@
   * **Rewind**, **Pause**, and **Resume** Sequence
   * **Automatic jQuery Element caching**
   * **CSS3 Animations**
-  * Debugging option with millisecond count
   * **Event Emitter based** vs. callback approach
+  * Debugging option with millisecond count
 
 ### Tested Compatibility:
 
-  * **IE9+** _(fallback to .animate on IE9)_
+  * **IE10+**
   * **Chrome 27+**
   * **Safari 6+**
   * **Firefox 21+**
@@ -83,7 +83,7 @@ $(function() {
 }
 ```
 
-**Please see _demo_ for a full working example**
+**Please see _examples_ for a full working example**
 
 ```bash
 $ bower install
@@ -91,7 +91,7 @@ $ bower install
 
 ### Brought to you by:
 
-  * **CandidBlend, LLC (@edwardhotchkiss)**
+  * **@edwardhotchkiss (CandidBlend, LLC)**
   * **@lindseymysse**
 
 ### License (MIT)

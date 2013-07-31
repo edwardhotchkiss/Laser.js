@@ -7,7 +7,7 @@
  * @license MIT
  */
 
-;(function(window) {
+;(function() {
 
   'use strict';
 
@@ -237,17 +237,6 @@
   }
 
   /**
-   * @private _padMilliseconds
-   * @description pads timer with up to six zeroes
-   * @param {Number} milliseconds milliseconds to pad
-   */
-
-  function _padMilliseconds(milliseconds) {
-    var max = '000000';
-    return (max + milliseconds).slice(-(max.length));
-  }
-
-  /**
    * @private _formatUnit
    * @description takes an attr value, depending on attr type,
    * returns the type if missing
@@ -304,7 +293,7 @@
    * @return {String} id class name
    */
 
-  function _id() {
+  function _id(initial) {
     return ['LASER_TR', ++_counter].join('_');
   }
 
@@ -463,6 +452,10 @@
 
   var Animation = function Animation(params) {
     _extend(this, params);
+    if (this.$elem.hasClass('animation') === false) {
+      this.$elem.addClass('animation');
+      this.setInitialStyle();
+    }
     this.state = 'ON_STACK';
     return this;
   };
@@ -490,6 +483,18 @@
         current[key] = this.$elem.css(key);
       }, this);
       return current;
+    },
+
+    /**
+     * @method setInitialStyle
+     * @description creates a class where rewind doesnt cause a "jerk"
+     */
+
+    setInitialStyle: function() {
+      var key, duration;
+      key = _getPropertyName('transition-duration').css;
+      duration = _formatDuration(this.options.duration);
+      this.initialStyle = key + ':' + duration + ';';
     },
 
     /**
@@ -549,6 +554,10 @@
      */
 
     rewind: function() {
+      // ease back into original state
+      if (this.initialStyle !== undefined) {
+        this.$elem.attr('style', this.initialStyle);
+      }
       this.$elem.removeClass(this.id);
       this.completeTimeout = setTimeout(function() {
         this.complete();
@@ -561,8 +570,7 @@
      */
 
     transition: function() {
-      var transitionString;
-      transitionString = _createTransitionString(
+      var transitionString = _createTransitionString(
         this.params,  
         this.startParams,        
         this.options.duration,  
@@ -584,29 +592,23 @@
   Laser.prototype = {
 
     /**
-     * @method elapsed
-     * @description determine elapsed time in ms of sequence playback
-     * @return {Number} milliseconds into playback
-     */
-
-    elapsed: function() {
-      return (new Date().getTime() - this.startedAt);
-    },
-
-    /**
      * @method log
      */
 
     log: function(message) {
+      var args = arguments;
       if (!this.console || !this.DEBUG) {
-        return;
+        return this;
+      } else {
+        if (typeof(Logger) === 'object') {
+          Logger.log(args);
+        } else {
+          require(['logger'], function(Logger) {
+            Logger.log(args);
+          });
+        }
+        return this;
       }
-      var log, args, name;
-      name = this.name || 'NO NAME';
-      args = Array.prototype.slice.call(arguments);
-      args[0] = ('DEBUG [' + _padMilliseconds(this.elapsed()) + '] > ') + message + ' "' + name + '"';
-      log = Function.prototype.bind.call(console.log, console);
-      log.apply(console, args);
     },
 
     /**
@@ -766,8 +768,8 @@
 
     play: function() {
       var animations = this.get('animations');
-      this.startedAt = new Date().getTime();
       this.remaining = animations.length;
+      this.startedAt = new Date().getTime();
       this.trigger('sequence:started', this.remaining);
       this.log('starting sequence');
       animations.forEach(function(val, index) {
@@ -801,7 +803,7 @@
      */
     
     pause: function() {
-      this.pausedAt = this.elapsed();
+      this.pausedAt = (new Date().getTime() - this.startedAt);
       this.log('pausing');
       this.get('animations').forEach(function(val, index) {
         switch(val.state) {
@@ -905,11 +907,11 @@
    */
 
   if (typeof(define) === 'function' && define.amd) {
-    define('laser', ['jquery'], function() { 
+    define('laser', ['jquery','logger'], function($, Logger) {
       return Laser;
     });
   } else {
     window.Laser = Laser;
   }
   
-}(this));
+}());

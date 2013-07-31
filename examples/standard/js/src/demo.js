@@ -4,12 +4,12 @@
  * @description create a demo laser.js sequence
  */
 
-define(['jquery','laser'], function($, Laser) {
+$(function() {
 
   'use strict';
 
   // create new sequence with logging (DEBUG : true)
-  var demo = new Laser({
+  var demoSequence = new Laser({
     DEBUG : true
   })
 
@@ -19,7 +19,7 @@ define(['jquery','laser'], function($, Laser) {
   })
   
   // on complete, rewind
-  .on('sequence:completed', function() {
+  .on('sequence:completed', function(elapsed) {
     this.rewind();
     this.off('sequence:completed');
   })
@@ -34,9 +34,26 @@ define(['jquery','laser'], function($, Laser) {
   .add('.box', { top  : 50  }, { duration : 750, when : 2750 })
 
   // assign a name for debugging
-  .name('demo');
+  .name('demo')
 
-  // return ready to animate sequence
-  return demo;
+  // display event triggers in view
+  .on('sequence:started', function() {
+    $('.current').text('started');
+  })
+  
+  .on('sequence:completed', function() {
+    $('.current').text('completed');
+  })
+  
+  .on('sequence:rewinding', function() {
+    $('.current').text('rewinding');
+  })
+
+  .on('sequence:paused', function() {
+    $('.current').text('paused');
+  })
+
+  // play sequence
+  demoSequence.play();
 
 });

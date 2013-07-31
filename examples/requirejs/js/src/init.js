@@ -13,9 +13,9 @@ require.config({
   inlineText: true,
 
   paths: {
-    'jquery':'vendor/jquery-2.0.3.min',
-    'laser' :'../../../src/laser',
-    'demo'  :'src/demo'
+    'jquery' : 'vendor/jquery-2.0.3.min',
+    'laser'  : '../../../dist/laser-1.0.0',
+    'demo'   : 'src/demo'
   },
 
   shim: {
@@ -30,9 +30,11 @@ require.config({
 });
 
 // demo handler - start on ready
-require(['src/demo'],
-  function(demoSequence) {
-    'use strict';
+require(['src/demo'], function(demoSequence) {
+  
+  'use strict';
+
+  $(function() {
 
     // display event triggers in view
     demoSequence.on('sequence:started', function() {
@@ -51,5 +53,6 @@ require(['src/demo'],
     // play sequence
     demoSequence.play();
 
-  }
-);
+  });
+    
+});

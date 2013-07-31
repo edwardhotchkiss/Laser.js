@@ -1,0 +1,81 @@
+
+html {
+  height: 100%;
+  min-height: 100%;
+}
+
+body {
+  font-family: @defaultFont;
+  font-size: @baseFontSize;
+  line-height: @baseLineHeight;
+  font-family: @defaultFont;
+  color: @pColor; 
+  text-rendering: optimizelegibility;
+}
+
+p, h3 {
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  color: @linkColor;
+  border: none;
+  text-decoration: none;
+}
+
+a:hover {
+  color: @linkColorHover;
+  text-decoration: none;
+}
+
+a.underline {
+  border-bottom: 1px solid @linkColor;
+}
+
+a.underline:hover {
+  border-bottom: 1px solid @linkColorHover;
+}
+
+h1, h2, h3, h4 {
+  color: @hColor; 
+  letter-spacing: -2px;
+}
+
+h1 {
+  font-size: 36px;
+}
+
+h2 {
+  font-size: 36px;
+}
+
+h3 {
+  font-size: 24px;
+}
+
+h4 {
+  font-size: 16px;
+}
+
+blockquote {
+  font-style: italic;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid @hrColor;
+  border-bottom: 1px solid #fff;
+}
+
+strong {
+  font-weight: bold;
+}
+
+ul {
+  list-style:none;
+  padding: 0;
+  margin: 0;
+}
+
+/* EOF */
