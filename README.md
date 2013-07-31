@@ -24,14 +24,17 @@
 **_JavaScript_**
 
 ```javascript
+
 $(function() {
 
-  // create new sequence with loggin
-  var seq = new Laser({
+  'use strict';
+
+  // create new sequence with logging (DEBUG : true)
+  var demoSequence = new Laser({
     DEBUG : true
   })
 
-  // on complete log id of animation
+  // on complete log id of completed animation
   .on('animation:completed', function(animation) {
     this.log('completed animation %s', animation.id);
   })
@@ -41,25 +44,38 @@ $(function() {
     this.rewind();
     this.off('sequence:completed');
   })
-  
+
+  // custom easing method
+  .addEasing('bounceOut', 'cubic-bezier(.33,1.66,.08,-1.71)')
+
   // add animations to sequence
-  .add('.box', { rotate : 90 }, { duration : 750, easing : 'easeOutExpo', when : 0 })
-  .add('.box', { left : 250 }, { duration : 750, easing : 'easeOutExpo', when : 750 })
-  .add('.box', { top : 250 }, { duration : 750, easing : 'easeOutExpo', when : 1500 })
-  .add('.box', { opacity : 0 }, { duration : 750, easing : 'easeOutExpo', when : 2250 })
-  .add('.box', { opacity : 1 }, { duration : 750, easing : 'easeOutExpo', when : 3000 })
-  .add('.box', { scale : 2 }, { duration : 750, easing : 'easeOutExpo', when : 3750 })
+  .add('.box', { left : 500 }, { duration : 750, when : 500  })
+  .add('.box', { top  : 250 }, { duration : 750, when : 1250 })
+  .add('.box', { left : 50  }, { duration : 750, when : 2000 })
+  .add('.box', { top  : 50  }, { duration : 750, when : 2750 })
+
+  // assign a name for debugging
+  .name('demo')
+
+  // display event triggers in view
+  .on('sequence:started', function() {
+    $('.current').text('started');
+  })
   
-  // start play back
-  .start();
+  .on('sequence:completed', function() {
+    $('.current').text('completed');
+  })
   
-  // artificial timing on pause/resume example.
-  setTimeout(function() {
-    seq.pause();
-    setTimeout(function() {
-      seq.resume();
-    }, 2000);
-  }, 850);
+  .on('sequence:rewinding', function() {
+    $('.current').text('rewinding');
+  })
+
+  .on('sequence:paused', function() {
+    $('.current').text('paused');
+  })
+
+  // play sequence
+  demoSequence.play();
 
 });
 ```
@@ -67,12 +83,15 @@ $(function() {
 **_HTML_**
 
 ```html
+
 <div class="box"></div>
+
 ```
 
 **_CSS_**
 
 ```css
+
 .box {
   top: 50px;
   left: 50px;
@@ -81,6 +100,7 @@ $(function() {
   position: absolute;
   background-color: #ff0099;
 }
+
 ```
 
 **Please see _examples_ for a full working example**
