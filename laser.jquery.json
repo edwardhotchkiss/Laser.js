@@ -1,6 +1,6 @@
 {
   "name": "laser",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "title": "Laser.js",
   "description": "Laser-precision animation sequencing & timing",
   "keywords":[
@@ -13,26 +13,18 @@
     "email": "edward@candidblend.la"
   },
   "maintainers":[
-    { 
-      "name": "Edward Hotchkiss",
-      "email": "edward@candidblend.la"
-    },
-    {
-      "name": "Lindsey Mysse",
-      "email": "lindsey.mysse@gmail.com"
-    }
+    { "name": "Edward Hotchkiss","github": "http://github.com/edwardhotchkiss/" },
+    { "name": "Lindsey Mysse","github": "https://github.com/lindseymysse/" },
+    { "name": "Avi Deitcher", "github": "https://github.com/deitch/" }
   ],
-  "homepage": "https://github.com/CandidBlend/laser.js",
+  "homepage": "http://laserjs.org/",
   "dependencies": {
-    "jquery": "1.10.2",
-    "jquery.easing": "1.3",
-    "underscore": ">=1.4.4",
-    "jquery-css3-ease": "1.0.0"
+    "jquery": ">=2.0.3"
   },
   "licenses":[
     {
       "type":"MIT",
-      "url":"http://github.com/CandidBlend/laser.js/LICENSE"
+      "url":"http://github.com/CandidBlend/Laser.js/LICENSE"
     }
   ]
 }

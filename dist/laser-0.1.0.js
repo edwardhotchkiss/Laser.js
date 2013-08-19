@@ -1,5 +1,66 @@
 
 /**
+ * @file logger.js
+ * @description console.log debug
+ */
+
+;(function(root) {
+
+  'use strict';
+
+  /**
+   * @private startedAt
+   * @description file init time
+   */
+
+  var startedAt = new Date().getTime();
+
+  /**
+   * @private _padMilliseconds
+   * @description pads timer with up to six zeroes
+   * @param {Number} milliseconds milliseconds to pad
+   */
+
+  function _padMilliseconds(milliseconds) {
+    var max = '000000';
+    return (max + milliseconds).slice(-(max.length));
+  }
+
+  /**
+   * @private _elapsed
+   * @description determine elapsed time since init
+   * @return {Number} milliseconds into app run time
+   */
+
+  function _elapsed() {
+    return (new Date().getTime() - startedAt);
+  }
+
+  /**
+   * @description augment console with debug, main module object
+   */
+
+  var Logger = {
+
+    log: function(args) {
+      var log, message = args[0];
+      args[0] = ('DEBUG [' + _padMilliseconds(_elapsed()) + '] > ') + message;
+      log = Function.prototype.bind.call(console.log, console);
+      log.apply(console, args);
+    }
+
+  };
+
+  /**
+   * @description attach obj to root
+   */
+
+  root.Logger = Logger;
+  
+}(window));
+
+
+/**
  * @library laser.js
  * @author Edward Hotchkiss <edward@candidblend.la>
  * @contributor Lindsey Mysse <lindsey.mysse@gmail.com>
@@ -7,23 +68,20 @@
  * @license MIT
  */
 
-(function(window, undefined) {
+;(function(root) {
 
   'use strict';
 
   /**
-   * @method Laser
-   * @description constructor fn
+   * @constructor Laser
    */
 
-  var Laser = window.Laser = function Laser(params) {
-    _.extend(this, params);
+  var Laser = function Laser(params) {
+    _extend(this, params);
     this.listeners = {};
     this.animations = [];
-    this.direction = 'forward';
-    this.transition = _isTransition();
     this.DEBUG = this.DEBUG || false;
-    this.console = (typeof(window.console) === 'object');
+    this.console = (typeof(root.console) === 'object');
     return this;
   };
 
@@ -107,40 +165,90 @@
   ];
 
   /**
-   * @description fallback support for IE9
+   * @private _nativeEasing
+   * @description list of native easing methods
    */
 
-  if (_isTransition()) {
+  var _nativeEasing = [
+    'ease',
+    'linear',
+    'ease-in',
+    'ease-out',
+    'ease-in-out'
+  ];
 
-    /**
-     * @extend jQuery CSS3 hooks for "rotate", "rotateY" and "rotateX"
-     */
+  /**
+   * @private _customEasing
+   * @description custom aliased cubic-bezier strings
+   */
 
-    _.map(['rotate','rotateY','rotateX'], function(key, index) {
-      $.cssHooks[key] = {
-        get: function(elem, computed, extra) {
-            var matrix = _processMatrix($(elem));
-            return '(' + matrix.angle + 'deg)';
-        },
-        set: function(elem, value) {
-          $(elem).css(_getPropertyName('Transform').css, value);
-        }
-      };
-    });
+  var _customEasing = {};
 
-    /**
-     * @extend jQuery CSS3 hook for "scale"
-     */
+  /**
+   * @extend jQuery CSS3 hooks for "rotate" (all,x,y)
+   */
 
-    $.cssHooks.scale = {
-      get: function(elem, computed) {
-        return _processMatrix($(elem)).scale;
+  ['rotate','rotateX','rotateY'].forEach(function(key, index) {
+    $.cssHooks[key] = {
+      get: function(elem, computed, extra) {
+        var matrix = _processMatrix($(elem));
+        return '(' + matrix.angle + 'deg)';
       },
       set: function(elem, value) {
         $(elem).css(_getPropertyName('Transform').css, value);
       }
     };
+  });
 
+  /**
+   * @extend jQuery CSS3 hook for "scale"
+   */
+
+  $.cssHooks.scale = {
+    get: function(elem, computed) {
+      return _processMatrix($(elem)).scale;
+    },
+    set: function(elem, value) {
+      $(elem).css(_getPropertyName('Transform').css, value);
+    }
+  };
+
+  function _isValidEasing(name) {
+    return (_getEasing(name) !== undefined) ? true : false;
+  }
+
+  /**
+   * @private _getEasing
+   * @description gets the value for an aliased CSS3 easing type
+   * @param {String} name easing name alias
+   * @return {String} 'cubic-bezier' easing string method
+   */
+
+  function _getEasing(name) {
+    if (_nativeEasing.indexOf(name) !== -1) {
+      return name;
+    } else if (_customEasing[name]) {
+      return _customEasing[name];
+    }
+  }
+
+  /**
+   * @method _setEasing
+   * @description sets an alias to a custom css3 cubic-bezier fn str
+   */
+
+  function _setEasing(name, easing) {
+    _customEasing[name] = easing;
+  }
+
+  /**
+   * @private _extend
+   */
+
+  function _extend(parent, params) {
+    return Object.keys(params).forEach(function(key, index, obj) {
+      parent[key] = params[key];
+    });
   }
 
   /**
@@ -190,54 +298,6 @@
   }
 
   /**
-   * @private _padMilliseconds
-   * @description pads timer with up to six zeroes
-   * @param {Number} milliseconds milliseconds to pad
-   */
-
-  function _padMilliseconds(milliseconds) {
-    var max = '000000';
-    return (max + milliseconds).slice(-(max.length));
-  }
-
-  /**
-   * @private _isTransition
-   * @description determine whether jQuery transit is available
-   * @return {Boolean} availability
-   */
-
-  function _isTransition() {
-    return (/(MSIE 9\.0)/.test(navigator.userAgent)) ? false : true;
-  }
-
-  /**
-   * @private _isValidEasing
-   * @description invalid easing method aliases bork .animate/.transition
-   * check that the alias exists in the dictionary
-   * @param {String} ea easing alias
-   * @return {Boolean} exists or doesn't
-   */
-
-  function _isValidEasing(alias) {
-    if (_isTransition()) {
-      return ($.cssEase[alias] !== undefined) ? true : false;
-    } else {
-      return ($.easing[alias] !== undefined) ? true : false;
-    }
-  }
-
-  /**
-   * @private _getEasingBezier
-   * @description gets the value for an aliased CSS3 easing type
-   * @param {String} alias easing name alias
-   * @return {String} 'cubic-bezier' easing string method
-   */
-
-  function _getEasingBezier(alias) {
-    return $.cssEase[alias];
-  }
-
-  /**
    * @private _formatUnit
    * @description takes an attr value, depending on attr type,
    * returns the type if missing
@@ -248,21 +308,21 @@
   function _formatUnit(val, currentVal, unit) {
     var result, relativeUnit;
     if (typeof(val) === 'string') {
-        relativeUnit = val.match(/^(-|\+)|(=)|([0-9]+$)/g);
-        if (unit === '') {
-            result = val;
-        } else if (relativeUnit && relativeUnit.length === 3) {
-            currentVal = currentVal.replace(/deg|px/, '');
-            if (relativeUnit[0] === '-') {
-                result = (currentVal - relativeUnit[2]) + unit;
-            } else if (relativeUnit[0] === '+') {
-                result = (currentVal + relativeUnit[2]) + unit;
-            }
-        } else if (!/^[0-9]+$/.test(val)) {
-            result = val;
+      relativeUnit = val.match(/^(-|\+)|(=)|([0-9]+$)/g);
+      if (unit === '') {
+          result = val;
+      } else if (relativeUnit && relativeUnit.length === 3) {
+        currentVal = currentVal.replace(/deg|px/, '');
+        if (relativeUnit[0] === '-') {
+          result = (currentVal - relativeUnit[2]) + unit;
+        } else if (relativeUnit[0] === '+') {
+          result = (currentVal + relativeUnit[2]) + unit;
         }
+      } else if (!/^[0-9]+$/.test(val)) {
+        result = val;
+      }
     } else {
-        result = (val.toString() + unit);
+      result = (val.toString() + unit);
     }
     return result;
   }
@@ -281,30 +341,21 @@
   }
 
   /**
-   * @private _removeCSSClass
-   * @description removes a .css class by id
-   * @param {String} classId class identifier
-   */
-
-  function _removeCSSClass(classId) {
-    var stylesheets, deleteRule;
-    stylesheets = document.styleSheets;
-    deleteRule = 'deleteRule' in stylesheets[0] ? 'deleteRule' : 'removeRule';
-    _.forEach(stylesheets, function(stylesheet, index) {
-      if (stylesheet.ownerNode.id === classId) {
-        stylesheets[index][deleteRule]();
-      }
-    });
-  }
-
-  /**
-   * @private _id
-   * @description generate a unique id, prefixed with "tr_"
+   * @private _counter
+   * @description incrementing counter for ids
    * @return {Number} id
    */
 
-  function _id() {
-    return _.uniqueId('laser_tr_');
+  var _counter = 0;
+
+  /**
+   * @private _id
+   * @description generate a unique id, prefixed with "laser_tr_"
+   * @return {String} id class name
+   */
+
+  function _id(initial) {
+    return ['LASER_TR', ++_counter].join('_');
   }
 
   /**
@@ -333,7 +384,7 @@
 
   function _getPrefix(prop) {
     var prefix, propBrowserTest = _camelCase(prop);
-    _.each(_omPrefixes, function(val) {
+    _omPrefixes.forEach(function(val) {
       if (_objList[(val + _upperCase(propBrowserTest))] === '') {
         prefix = { css : '-' + val.toLowerCase()+'-', om : val };
       }
@@ -364,11 +415,12 @@
    */
 
   function _createTransitionString(params, startParams, _duration, easing) {
-    var cur, unit, duration, transformString, blandTransition = '', finalTransition = '';
+    var cur, val, unit, duration, transformString, blandTransition = '', finalTransition = '';
     duration = _formatDuration(_duration); 
-    _.each(params, function(val, key) {
-        cur = startParams[key];
-      if (_.contains(_transformTypes, key)) {
+    Object.keys(params).forEach(function(key, index, arr) {
+      val = params[key];
+      cur = startParams[key];
+      if (_transformTypes.indexOf(key) !== -1) {
         unit = (key === 'perspective') ? 'px' : 'deg';
         unit = (key === 'scale') ? '' : unit;
         if (transformString === '') {
@@ -382,7 +434,7 @@
       }
     });
     finalTransition += (_getPropertyName('transition-duration').css + ': ' + duration + ' !important;');
-    finalTransition += (_getPropertyName('transition-timing-function').css + ':' + _getEasingBezier(easing) + '!important;');
+    finalTransition += (_getPropertyName('transition-timing-function').css + ':' + _getEasing(easing) + '!important;');
     if (transformString !== undefined ) {
       finalTransition += _getPropertyName('Transform').css + ':' + transformString + ' !important;';
     }
@@ -422,16 +474,36 @@
   function _getCSSPath(selector) {
     var path, elem = $(selector)[0];
     if (elem.id) {
-      return "#" + elem.id;
+      return '#' + elem.id;
     }
     if (elem.tagName == 'BODY') {
       return '';
     }
     path = _getCSSPath(elem.parentNode);
     if (elem.className) {
-      return path + " " + elem.tagName + "." + elem.className;
+      return path + ' ' + elem.tagName + '.' + elem.className;
     }
-    return path + " " + elem.tagName;
+    return path + ' ' + elem.tagName;
+  }
+
+  /**
+   * @private _where
+   * @description search an array by key/value
+   * @param {Array} arr list to search
+   * @param {Object} search params
+   * @return {Array} filtered arr
+   */
+
+  function _where(list, query) {
+    var results = list.filter(function(val, index, arr) {
+      Object.keys(query).forEach(function(key, index, obj) {
+        if (obj[key] !== query[key]) {
+          return false;
+        } else {
+          return true;
+        }
+      });
+    });
   }
 
   /**
@@ -440,7 +512,11 @@
    */
 
   var Animation = function Animation(params) {
-    _.extend(this, params);
+    _extend(this, params);
+    if (this.$elem.hasClass('animation') === false) {
+      this.$elem.addClass('animation');
+      this.setInitialStyle();
+    }
     this.state = 'ON_STACK';
     return this;
   };
@@ -455,19 +531,31 @@
      * @method getCurrentParams
      * @description get current values of animations params
      * to maintain state
-     * @return {Object} key/value pairs of animated param keys with
-     * their current values
+     * @return {Object} current key/value pairs of animated
+     * param keys with their current values
      */
 
     getCurrentParams: function() {
-      var params = {};
-      _.forEach(this.params, function(val, key) {
+      var current = {};
+      Object.keys(this.params).forEach(function(key, index, arr) {
         if (_isTransform(key)) {
-          params.transform = this.$elem.css(key);
+          current.transform = this.$elem.css(key);
         }
-        params[key] = this.$elem.css(key);
+        current[key] = this.$elem.css(key);
       }, this);
-      return params;
+      return current;
+    },
+
+    /**
+     * @method setInitialStyle
+     * @description creates a class where rewind doesnt cause a "jerk"
+     */
+
+    setInitialStyle: function() {
+      var key, duration;
+      key = _getPropertyName('transition-duration').css;
+      duration = _formatDuration(this.options.duration);
+      this.initialStyle = key + ':' + duration + ';';
     },
 
     /**
@@ -477,14 +565,9 @@
      */
 
     play: function() {
-        this.startParams = this.getCurrentParams();
-        this.state = 'PLAYING';
-      this.active = true;
-      if (this.sequence.transition) {
-        this.transition();
-      } else {
-        this.animate();
-      }
+      this.startParams = this.getCurrentParams();
+      this.state = 'PLAYING';
+      this.transition();
     },
 
     /**
@@ -495,7 +578,6 @@
     complete: function() {
       this.sequence.trigger('animation:completed', this);
       this.state = 'COMPLETED';
-      this.active = false;
     },
 
     /**
@@ -504,8 +586,7 @@
      */
 
     pause: function() {
-      this.pausedStyle = this.$elem.attr('style');
-      _.forEach(this.getCurrentParams(), function(val, key) {
+      Object.keys(this.getCurrentParams()).forEach(function(key, index, arr) {
         this.$elem.css(key, this.$elem.css(key));
       }, this);
       this.$elem.removeClass(this.id);
@@ -518,13 +599,13 @@
      */
 
     resume: function() {
-      _.forEach(this.getCurrentParams(), function(val, key) {
+      this.$elem.addClass(this.id);
+      Object.keys(this.getCurrentParams()).forEach(function(val, key) {
         this.$elem.css(key, '');
       }, this);
-      this.$elem.addClass(this.id);
-      this.completeTimeout = setTimeout(_.bind(function() {
+      this.completeTimeout = setTimeout(function() {
         this.complete();
-      }, this), this.options.duration);
+      }.bind(this), this.options.duration);
       this.state = 'PLAYING';
     },
 
@@ -534,27 +615,14 @@
      */
 
     rewind: function() {
+      // ease back into original state
+      if (this.initialStyle !== undefined) {
+        this.$elem.attr('style', this.initialStyle);
+      }
       this.$elem.removeClass(this.id);
-      this.completeTimeout = setTimeout(_.bind(function() {
+      this.completeTimeout = setTimeout(function() {
         this.complete();
-      }, this), this.options.duration);
-    },
-
-    /**
-     * @method animate
-     * @description animates item's properties
-     */
-
-    animate: function() {
-      var $elem = this.$elem;
-      delete this.options.when;
-      this.options.queue = false;
-      this.options.complete = _.bind(function() {
-        this.sequence.trigger('animation:completed', this);
-        this.state = 'COMPLETED';
-        this.active = false;
-      }, this);
-      return this.$elem.animate(this.params, this.options);
+      }.bind(this), this.options.duration);
     },
 
     /**
@@ -563,8 +631,7 @@
      */
 
     transition: function() {
-      var transitionString;
-      transitionString = _createTransitionString(
+      var transitionString = _createTransitionString(
         this.params,  
         this.startParams,        
         this.options.duration,  
@@ -572,9 +639,9 @@
       );
       _insertCSSClass(this.id, transitionString);
       this.$elem.addClass(this.id);
-      this.completeTimeout = setTimeout(_.bind(function() {
+      this.completeTimeout = setTimeout(function() {
         this.complete();
-      }, this), this.options.duration);
+      }.bind(this), this.options.duration);
     }
 
   };
@@ -586,42 +653,31 @@
   Laser.prototype = {
 
     /**
-     * @method elapsed
-     * @description determine elapsed time in ms of sequence playback
-     * @return {Number} milliseconds into playback
-     */
-
-    elapsed: function() {
-      return (new Date().getTime() - this.startedAt);
-    },
-
-    /**
      * @method log
      */
 
     log: function(message) {
+      var args = arguments;
       if (!this.console || !this.DEBUG) {
-        return;
+        return this;
+      } else {
+        Logger.log(args);
+        return this;
       }
-      var log, args;
-      args = Array.prototype.slice.call(arguments);
-      args[0] = ('DEBUG [' + _padMilliseconds(this.elapsed()) + '] > ') + message;
-      log = Function.prototype.bind.call(console.log, console);
-      log.apply(console, args);
     },
 
     /**
      * @method get
      * @param {String} attr instance attribute
-     * @param {Object} where set of key/values to match
+     * @param {Object} query set of key/values to match
      * @description instance attribute getter
      */
 
-    get: function(attr, where) {
-      if (where === undefined) {
+    get: function(attr, query) {
+      if (query === undefined) {
         return this[attr];
       } else {
-        return _.where(this[attr], where);
+        return _where(this[attr], params);
       }
     },
 
@@ -635,14 +691,13 @@
 
     set: function(attr, where, params) {
       var item = this.get(attr, where);
-      if (item === undefined) {
-        return undefined;
-      } else {
-        _.forEach(params, function(val, key) {
-          result[key] = val;
-        }, this);
-        return obj;
+      if (!item) {
+        throw new Error('Unknown Attribute: "'+attr+'"');
       }
+      Object.keys(params).forEach(function(val, key) {
+        result[key] = val;
+      }, this);
+      return obj;
     },
 
     /**
@@ -661,13 +716,12 @@
     /**
      * @method off
      * @param {String} name event name
-     * @param {Function} fn trigger function to remove
      * @description remove event listener
      */
 
-    off: function(name, fn) {
+    off: function(name) {
       if (this.listeners[name]) {
-        this.listeners[name].splice(this.listeners[name].indexOf(fn), 1);
+        delete this.listeners[name];
       }
       return this;
     },
@@ -679,12 +733,13 @@
      */
 
     trigger: function(name) {
-      if (this.listeners[name]) {
-        var args = Array.prototype.slice.call(arguments, 1);
-        _.forEach(this.listeners[name], function(val, index, obj) {
-          val.apply(this, args);
-        }, this);
+      if (!this.listeners[name]) {
+        return this;
       }
+      var args = Array.prototype.slice.call(arguments, 1);
+      this.listeners[name].forEach(function(val, index, arr) {
+        val.apply(this, args);
+      }, this);
       return this;
     },
 
@@ -701,20 +756,14 @@
     add: function(selector, params, options) {
       var when, sequence = this, $elem = _setCachedElement(selector);
       when = (options.when || 0);
-      options.easing = (options.easing || 'easeOutExpo');
+      options.easing = (options.easing || 'ease-out');
       if (!_isValidEasing(options.easing)) {
-        if (!_isValidEasing('easeOutExpo')) {
-          throw new Error('Unknown easing method! - ' + options.easing);
-        } else {
-          options.easing = 'easeOutExpo';
-        }
+        throw new Error('Unknown easing method! - ' + options.easing);
       }
-      options.duration = options.duration || 500;
       this.animations.push(
         new Animation({
           id       : _id(),
           when     : when,
-          active   : false,
           params   : params,
           options  : options,
           sequence : sequence,
@@ -727,15 +776,11 @@
 
     /**
      * @method addEasing
-     * @description add either a css3 cubic-bezier ease or a jquery easing fn
+     * @description add a css3 cubic-bezier easing str
      */
 
-    addEasing: function(alias, easing) {
-      if (typeof(easing) === 'string') {
-        $.cssEase[alias] = easing;
-      } else {
-        $.easing[alias] = easing;
-      }
+    addEasing: function(name, easing) {
+      _setEasing(name, easing);
       return this;
     },
 
@@ -747,9 +792,9 @@
 
     onAnimated: function() {
       if (this.padTime) {
-        setTimeout(_.bind(function() {
+        setTimeout(function() {
           this.trigger('sequence:completed');
-        }, this), this.padTime);
+        }.bind(this), this.padTime);
       } else {
         this.log('sequence completed');
         this.trigger('sequence:completed');
@@ -772,19 +817,20 @@
 
     /**
      * @method play
-     * @description plays animation sequence
+     * @description plays animation sequence, looks for state being set
+     * to paused, so that start/resume diffs are transparent to the user
      */
 
-    start: function() {
+    play: function() {
       var animations = this.get('animations');
-      this.startedAt = new Date().getTime();
       this.remaining = animations.length;
+      this.startedAt = new Date().getTime();
       this.trigger('sequence:started', this.remaining);
       this.log('starting sequence');
-      _.forEach(animations, function(val, index) {
-        val.whenTimeout = setTimeout(_.bind(function() {
+      animations.forEach(function(val, index) {
+        val.whenTimeout = setTimeout(function() {
           val.play();
-        }, this), val.when);
+        }.bind(this), val.when);
       }, this);
       this.on('sequence:animated', function() {
         this.onAnimated();
@@ -792,6 +838,7 @@
       this.on('animation:completed', function(animation) {
         this.onAnimationComplete(animation);
       });
+      this.state = 'playing';
       return this;
     },
 
@@ -811,12 +858,9 @@
      */
     
     pause: function() {
-      if (!this.transition) {
-        return this;
-      }
-      this.pausedAt = this.elapsed();
+      this.pausedAt = (new Date().getTime() - this.startedAt);
       this.log('pausing');
-      _.forEach(this.get('animations'), function(val, index) {
+      this.get('animations').forEach(function(val, index) {
         switch(val.state) {
           case 'STOPPED':
             break;
@@ -831,6 +875,7 @@
         }
       }, this);
       this.trigger('sequence:paused');
+      this.state = 'paused';
       return this;
     },
 
@@ -840,25 +885,23 @@
      */
     
     resume: function() {
-      if (!this.transition) {
-        return this;
-      }
       var PAUSE_OFFSET = this.pausedAt;
       this.log('resuming');
-      _.forEach(this.get('animations'), function(val, index) {
+      this.get('animations').forEach(function(val, index) {
         switch(val.state) {
           case 'PAUSED':
             val.resume();
             break;
           case 'ON_STACK_RESET':
-            val.whenTimeout = setTimeout(_.bind(function() {
+            val.whenTimeout = setTimeout(function() {
               val.play();
-            }, this), val.when - PAUSE_OFFSET);
+            }.bind(this), val.when - PAUSE_OFFSET);
             this.state = 'ON_STACK';
             break;
         }
       }, this);
       this.trigger('sequence:resuming');
+      this.state = 'resuming';
       return this;
     },
 
@@ -869,26 +912,23 @@
      */
 
     rewind: function() {
-      if (!this.transition) {
-        return this;
-      }
-      var runTime, reversedAnimations, PAUSE_OFFSET;
-      PAUSE_OFFSET = this.pausedAt;
+      var runTime, reversedAnimations;
       runTime = this.getRunTime();
-      this.log('reverse');
-      reversedAnimations = _.map(this.get('animations'), function(val, index) {
+      this.log('rewinding');
+      reversedAnimations = this.get('animations').map(function(val, index, arr) {
         val.when = (runTime - val.when - val.options.duration);
         return val;
-      }, this);
+      });
       reversedAnimations.reverse();
-      _.forEach(reversedAnimations, function(val, index) {
-        val.whenTimeout = setTimeout(_.bind(function() {
+      reversedAnimations.forEach(function(val, index, arr) {
+        val.whenTimeout = setTimeout(function() {
           val.rewind();
-        }, this), val.when);
+        }.bind(this), val.when);
       }, this);
       this.direction = 'rewind';
       this.remaining = reversedAnimations.length;
       this.trigger('sequence:rewinding');
+      this.state = 'rewinding';
       return this;
     },
 
@@ -902,8 +942,25 @@
       var last, animations = this.get('animations');
       last = animations[animations.length - 1];
       return last.when + last.options.duration;
+    },
+
+    /**
+     * @method name
+     * @description sets a sequences "name" attr for debug/logging purposes
+     * @param {String} name identifier
+     */
+
+    name: function(name) {
+      this.name = name;
+      return this;
     }
 
   };
-  
+
+  /**
+   * @description attach obj to root
+   */
+
+  root.Laser = Laser;
+
 }(window));

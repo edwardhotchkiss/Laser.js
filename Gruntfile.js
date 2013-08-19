@@ -9,7 +9,7 @@ module.exports = function(grunt) {
     pkg: grunt.file.readJSON('package.json'),
     uglify: {
       options: {
-        banner: '/*! laser.js v<%= pkg.version %>, <%= grunt.template.today("yyyy-mm-dd") %> */\n'
+        banner: '/* <%= pkg.name %> v<%= pkg.version %> / <%= pkg.homepage %> */\n'
       },
       build: {
         src: 'dist/laser-<%= pkg.version %>.js',
@@ -26,7 +26,7 @@ module.exports = function(grunt) {
       files: {
         src: [
           'Gruntfile.js',
-          'src/laser.js'
+          'src/**/*.js'
         ]
       }
     },
@@ -35,6 +35,7 @@ module.exports = function(grunt) {
       },
       dist: {
         src: [
+          'src/logger.js',
           'src/laser.js'
         ],
         dest: 'dist/laser-<%= pkg.version %>.js'
@@ -44,9 +45,9 @@ module.exports = function(grunt) {
       scripts: {
         files: [
           'Gruntfile.js',
-          'src/laser.js'
+          'src/**/*.js'
         ],
-        tasks: ['jshint']
+        tasks: ['jshint','concat']
       }
     }
   });
@@ -57,7 +58,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-watch');
 
   grunt.registerTask('build', ['jshint','concat','uglify']);
-  grunt.registerTask('default', ['jshint','watch']);
+  grunt.registerTask('default', ['jshint','concat','watch']);
 
 };
 
