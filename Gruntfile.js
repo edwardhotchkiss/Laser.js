@@ -9,7 +9,7 @@ module.exports = function(grunt) {
     pkg: grunt.file.readJSON('package.json'),
     uglify: {
       options: {
-        banner: '/*! laser.js v<%= pkg.version %>, <%= grunt.template.today("yyyy-mm-dd") %> */\n'
+        banner: '/* <%= pkg.name %> v<%= pkg.version %> / <%= pkg.homepage %> */\n'
       },
       build: {
         src: 'dist/laser-<%= pkg.version %>.js',

@@ -4,7 +4,7 @@
  * @description console.log debug
  */
 
-;(function() {
+;(function(root) {
 
   'use strict';
 
@@ -52,15 +52,9 @@
   };
 
   /**
-   * @description AMD definition
+   * @description attach obj to root
    */
 
-  if (typeof(define) === 'function' && define.amd) {
-    define('logger', function() {
-      return Logger;
-    });
-  } else {
-    window.Logger = Logger;
-  }
+  root.Logger = Logger;
   
-}());
+}(window));
