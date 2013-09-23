@@ -11,12 +11,12 @@
   "main": "dist/laser.js",
   "dependencies": {
     "jquery": "1.10.2",
-    "underscore": ">=1.4.4",
+    "underscore": "1.5.2",
     "jquery-css3-ease": "1.0.0",
-    "jquery-easing": "1.3.0",
-    "jquery-transform": "~1.0",
-    "jquery-bez": "https://github.com/rdallasgray/bez.git",
-    "jquery-pause": "https://github.com/tobia/Pause.git"
+    "jquery-easing": "https://github.com/danro/jquery-easing",
+    "jquery-transform": "https://github.com/louisremi/jquery.transform.js",
+    "jquery-bez": "git@github.com:rdallasgray/bez.git",
+    "jquery-pause": "git@github.com:tobia/Pause.git"
   },
   "ignore": [
     "node_modules",
