@@ -14,7 +14,7 @@
 
 ### Tested Compatibility:
 
-  * **IE10+**
+  * **IE9+**
   * **Chrome 27+**
   * **Safari 6+**
   * **Firefox 21+**
