@@ -1,5 +1,5 @@
 
-# laser.js
+# Laser.js
 
 > Laser-precision animation sequencing & timing
 
@@ -10,14 +10,21 @@
   * **Automatic jQuery Element caching**
   * **CSS3 Animations**
   * **Event Emitter based** vs. callback approach
-  * Debugging option with millisecond count
+  * _Strong Debugging_ output with millisecond timeline/sequence count
 
 ### Tested Compatibility:
 
-  * **IE9+**
+  * **IE10+**
   * **Chrome 27+**
   * **Safari 6+**
   * **Firefox 21+**
+
+### Dependencies:
+
+  * _[jQuery 2.0+](http://jquery.com/download/)_
+  * _[Underscore.js 1.5.2+](http://underscorejs.org/)_
+  * _[cssEase.js](https://github.com/robdodson/jquery-css3-ease)_
+
 
 ### Usage
 
@@ -103,16 +110,10 @@ $(function() {
 
 ```
 
-**Please see _examples_ for a full working example**
-
-```bash
-$ bower install
-```
-
 ### Brought to you by:
 
-  * **@edwardhotchkiss (CandidBlend, LLC)**
-  * **@lindseymysse**
+  * **[@edwardhotchkiss](https://github.com/edwardhotchkiss) / [@CandidBlend](https://github.com/CandidBlend)**
+  * **[@lindseymysse](https://github.com/lindseymysse/)**
 
 ### License (MIT)
 

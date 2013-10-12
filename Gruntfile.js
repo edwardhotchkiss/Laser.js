@@ -1,15 +1,11 @@
 
-/**
- * @description Watch, concat and minify for dist.
- */
-
 module.exports = function(grunt) {
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     uglify: {
       options: {
-        banner: '/* <%= pkg.name %> v<%= pkg.version %> / <%= pkg.homepage %> */\n'
+        banner: '// <%= pkg.name %> v<%= pkg.version %>, by <%= pkg.author %>\r\n// <%= pkg.homepage %>\n'
       },
       build: {
         src: 'dist/laser-<%= pkg.version %>.js',
@@ -61,5 +57,3 @@ module.exports = function(grunt) {
   grunt.registerTask('default', ['jshint','concat','watch']);
 
 };
-
-/* EOF */

@@ -26,7 +26,6 @@
     this.state = 'blank';
     this.animations = [];
     this.direction = 'forward';
-    this.transition = _isTransition;
     this.DEBUG = this.DEBUG ||
       (/http(s)?:\/\/(localhost:8888|[^\/]+.local|192\.168\.1\..*)\//).test(window.location);
     this.console = (typeof(window.console) === 'object');
@@ -128,32 +127,6 @@
 
   /**
    * @memberof Laser
-   * @private
-   * @type {external:jQuery}
-   */
-
-  var _$head;
-
-  /**
-   * @memberof Laser
-   * @private
-   * @static
-   * @type {boolean}
-   */
-
-  var _isIE9 = (/MSIE 9\.0/).test(navigator.userAgent);
-  /**
-   * Determine whether to use style updates instead of jQuery.animate.
-   * @memberof Laser
-   * @private
-   * @static
-   * @type {boolean}
-   */
-
-  var _isTransition = !_isIE9;
-
-  /**
-   * @memberof Laser
    * @param {string} selector
    * @private
    * @return {external:jQuery}
@@ -190,20 +163,14 @@
   }
 
   /**
-   * Invalid easing method aliases bork .animate/.transition. Check that the
-   * alias exists in the dictionary.
-   * @memberof Laser
+   * @private _isValidEasing
    * @param {string} alias
    * @private
    * @return {boolean}
    */
 
   function _isValidEasing(alias) {
-    if (_isTransition) {
-      return ($.cssEase[alias] !== undefined) ? true : false;
-    } else {
-      return ($.easing[alias] !== undefined) ? true : false;
-    }
+    return ($.cssEase[alias] !== undefined) ? true : false;
   }
 
   /**
@@ -219,21 +186,21 @@
   function _formatUnit(val, currentVal, unit) {
     var result, relativeUnit;
     if (typeof(val) === 'string') {
-        relativeUnit = val.match(/^(-|\+)|(=)|([0-9]+$)/g);
-        if (unit === '') {
-            result = val;
-        } else if (relativeUnit && relativeUnit.length === 3) {
-            currentVal = currentVal.replace(/deg|px/, '');
-            if (relativeUnit[0] === '-') {
-                result = (currentVal - relativeUnit[2]) + unit;
-            } else if (relativeUnit[0] === '+') {
-                result = (currentVal + relativeUnit[2]) + unit;
-            }
-        } else if (!/^[0-9]+$/.test(val)) {
-            result = val;
+      relativeUnit = val.match(/^(-|\+)|(=)|([0-9]+$)/g);
+      if (unit === '') {
+        result = val;
+      } else if (relativeUnit && relativeUnit.length === 3) {
+        currentVal = currentVal.replace(/deg|px/, '');
+        if (relativeUnit[0] === '-') {
+          result = (currentVal - relativeUnit[2]) + unit;
+        } else if (relativeUnit[0] === '+') {
+          result = (currentVal + relativeUnit[2]) + unit;
         }
+      } else if (!/^[0-9]+$/.test(val)) {
+        result = val;
+      }
     } else {
-        result = (val.toString() + unit);
+      result = (val.toString() + unit);
     }
     return result;
   }
@@ -386,34 +353,6 @@
   }
 
   /**
-   * Gets full css path of a jQuery object.
-   * @memberof Laser
-   * @param {string} selector
-   * @private
-   * @return {string} Full path with selector.
-   */
-
-  function _getCSSPath(selector) {
-    var path, elem = $(selector)[0];
-    if (elem.id) {
-      return "#" + elem.id;
-    }
-    if (elem.tagName === 'BODY') {
-      return '';
-    }
-    path = _getCSSPath(elem.parentNode);
-    if (elem.className) {
-      return path + " " + elem.tagName + "." + elem.className;
-    }
-    return path + " " + elem.tagName;
-  }
-
-  /**
-   * @private
-   * @description constructor fn
-   */
-
-  /**
    * @constructor Animation
    * @param {Object} params
    */
@@ -465,26 +404,10 @@
      */
 
     play: function() {
-
-      /**
-       * @memberof Animation
-       * @type {Object}
-       */
-      
       this.startParams = this.getCurrentParams();
       this.state = 'PLAYING';
-      
-      /**
-       * @memberof Animation
-       * @type {boolean}
-       */
-      
       this.active = true;
-      if (_isTransition) {
-        this.transition();
-      } else {
-        this.animate();
-      }
+      this.transition();
     },
 
     /**
@@ -547,42 +470,8 @@
     },
 
     /**
-     * Animate item's properties using jQuery fallback.
-     */
-
-    animate: function() {
-      var params, transformName, customEasing;
-      this.options.queue = false;
-      this.options.complete = _.bind(function() {
-        this.sequence.trigger('animation:completed', this);
-        this.state = 'COMPLETED';
-        this.active = false;
-      }, this);
-      if (!this.$elem.length) {
-        // Skip if nothing animatable.
-        this.options.complete();
-      } else if (this.params.display) {
-        // Skip to using `css` if property isn't animatable.
-        this.$elem.css('display', this.params.display);
-        this.options.complete();
-      } else {
-        if (this.options.easing) {
-          // Convert css cubic-bezier easing to jQuery easing.
-          customEasing = $.easing[this.options.easing];
-          if (_.isString(customEasing) && customEasing.indexOf('cubic-bezier') === 0) {
-            this.options.easing = $.bez(customEasing.match((/-?\d?\.\d+/g)));
-          }
-        }
-        params = _createAnimationCSS(this.params, this.startParams, false);
-        this.sequence.log(this.selector, params, this.options);
-        this.$elem
-          .delay(this.options.when)
-          .animate(params, this.options);
-      }
-    },
-
-    /**
-     * animate item's properties using css3 transition.
+     * @method transition
+     * @description animate item's properties using css3 transition.
      */
 
     transition: function() {
@@ -623,13 +512,6 @@
       name = this.name || 'NO NAME';
       args = Array.prototype.slice.call(arguments);
       args[0] = ('LASER [' + _padMilliseconds(this.elapsed()) + '] > ') + message + ' "' + name + '"';
-      if (_isIE9) {
-        _.each(_.rest(arguments), function(arg, idx) {
-          if ($.isPlainObject(arg)) {
-              args[idx + 1] = window.JSON.stringify(arg);
-          }
-        });
-      }
       log = Function.prototype.bind.call(console.log, console);
       log.apply(console, args);
     },
@@ -756,18 +638,15 @@
     },
 
     /**
-     * add either a css3 cubic-bezier ease or a jquery easing fn.
+     * @description adds a css3 cubic-bezier to our hash table of easing fns
+     * @method addEasing
      * @param {string} alias
      * @param {string|Function} easing
      * @return {Laser} Instance for chaining.
      */
 
     addEasing: function(alias, easing) {
-      if (_isTransition) {
-        $.cssEase[alias] = easing;
-      } else {
-        $.easing[alias] = easing;
-      }
+      $.cssEase[alias] = easing;
       return this;
     },
 
@@ -796,7 +675,6 @@
 
     onAnimationComplete: function(animation) {
       this.remaining--;
-      //this.log('completed: '+animation.selector, 'remaining: '+this.remaining);
       if (this.remaining === 0) {
         this.trigger('sequence:animated');
       }
@@ -806,7 +684,8 @@
     },
 
     /**
-     * plays animation sequence.
+     * @method start
+     * @description plays animation sequence.
      * @return {Laser} Instance for chaining.
      */
 
@@ -858,10 +737,6 @@
       this.pausedAt = this.elapsed();
       this.log('pausing');
       _.forEach(this.get('animations'), function(val, index) {
-        if (!_isTransition) {
-          val.$elem.pause();
-          return;
-        }
         switch(val.state) {
           case 'STOPPED':
             break;
@@ -917,9 +792,6 @@
      */
 
     rewind: function() {
-      if (!_isTransition) {
-        return this;
-      }
       var runTime, reversedAnimations, PAUSE_OFFSET;
       this.pause();
       PAUSE_OFFSET = this.pausedAt;
