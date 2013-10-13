@@ -1,4 +1,10 @@
 
+0.2.0 / 2013-10-12 
+==================
+
+ * [major] fixes all along the quarter, refactor, prep for tests specifically on pause/reverse
+ * [update] build 0.1.0 with pen wang\'s changes
+
 0.1.0 / 2013-08-19 
 ==================
 
