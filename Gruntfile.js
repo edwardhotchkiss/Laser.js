@@ -3,8 +3,12 @@ module.exports = function(grunt) {
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
+
     uglify: {
       options: {
+        wrap: false,
+        mangle: false,
+        compress: false,
         banner: '// <%= pkg.name %> v<%= pkg.version %>, by <%= pkg.author %>\r\n// <%= pkg.homepage %>\n'
       },
       build: {
@@ -12,6 +16,7 @@ module.exports = function(grunt) {
         dest: 'dist/laser-<%= pkg.version %>.min.js'
       }
     },
+
     jshint: {
       options: {
         browser: true,
@@ -26,6 +31,7 @@ module.exports = function(grunt) {
         ]
       }
     },
+
     concat: {
       options: {
       },
@@ -37,6 +43,7 @@ module.exports = function(grunt) {
         dest: 'dist/laser-<%= pkg.version %>.js'
       }
     },
+
     watch: {
       scripts: {
         files: [
@@ -46,6 +53,7 @@ module.exports = function(grunt) {
         tasks: ['jshint','concat']
       }
     }
+
   });
 
   grunt.loadNpmTasks('grunt-contrib-jshint');
