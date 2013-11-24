@@ -2,8 +2,8 @@
   "name": "Laser.js",
   "description": "Laser-precision CSS3 animation sequencing & timing",
   "version": "0.2.0",
-  "author": "Edward Hotchkiss <edward@candidblend.la>",
-  "homepage": "http://github.com/CandidBlend/Laser.js",
+  "author": "Edward Hotchkiss <edward@edwardhotchkiss.com>",
+  "homepage": "http://github.com/edwardhotchkiss/Laser.js",
   "devDependencies":{
     "grunt": "0.4.1",
     "grunt-contrib-uglify": "0.1.1",
