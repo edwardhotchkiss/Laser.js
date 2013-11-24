@@ -111,7 +111,7 @@ $(function() {
 
 ### Brought to you by:
 
-  * **[@edwardhotchkiss](https://github.com/edwardhotchkiss) / [@CandidBlend](https://github.com/edwardhotchkiss/)**
+  * **[@edwardhotchkiss](https://github.com/edwardhotchkiss) / [@edwardhotchkiss](https://github.com/edwardhotchkiss/)**
   * **[@lindseymysse](https://github.com/lindseymysse/)**
 
 ### License (MIT)
